@@ -1,15 +1,17 @@
 pipeline {
     agent any
 
+    environment {
+        credenciales = credentials('Credentials_Threepoints')
+    }
     stages {
         stage('Checkout') {
 
             steps {
-                git credentialsId: 'ABCDE',
+                git credentialsId: 'Gitlab-credentials',
                 url: 'http://localhost/threepoints/docker-vulnerable-dvwa.git'
             }
         }
-
         stage('Prueba Paralela') {
             parallel {
                 stage('Pruebas de SAST') {
@@ -22,6 +24,27 @@ pipeline {
                         sh 'echo "WORKSPACE path: ${WORKSPACE}"'
                     }
                 }
+            }
+        }
+        stage('Configurar archivo') {
+            steps {
+                sh 'echo "Estamos configurando el archivo"'
+                script {
+                    def creds = credentials('Credentials_Threepoints')
+                        sh 'echo $Credentials_Threepoints_USR'
+                        sh '' 'echo "[credentials]\\nuser=$credenciales_USR\\n password=${credenciales_PSW}Three" | od -a > credentials.ini
+                                                      cat credentials.ini ' ''
+                        archiveArtifacts artifacts: 'credentials.ini',
+                    onlyIfSuccessful: true
+                    sh 'ls'
+                    sh 'cat credentials.ini'
+                }
+            }
+        }
+        stage('Build') {
+            steps {
+                sh 'echo "En proceso de Build"'
+                sh 'docker build -t dvwa .'
             }
         }
     }
