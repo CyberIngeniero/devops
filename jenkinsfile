@@ -1,0 +1,28 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Checkout') {
+
+            steps {
+                git credentialsId: 'ABCDE',
+                url: 'http://localhost/threepoints/docker-vulnerable-dvwa.git'
+            }
+        }
+
+        stage('Prueba Paralela') {
+            parallel {
+                stage('Pruebas de SAST') {
+                    steps {
+                        sh 'echo "Ejecución de pruebas de SAST"'
+                    }
+                }
+                stage('Imprimir Env') {
+                    steps {
+                        sh 'echo "WORKSPACE path: ${WORKSPACE}"'
+                    }
+                }
+            }
+        }
+    }
+}
