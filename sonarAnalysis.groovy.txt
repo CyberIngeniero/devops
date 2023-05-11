@@ -1,0 +1,28 @@
+def call(boolean abortPipeline = false, boolean useSonarQube = false) {
+    def qualityGateStatus = 'NONE'
+    def analysisResult = ''
+
+    if (!useSonarQube) {
+        sh 'echo "Ejecución de las pruebas de calidad de código"'
+        timeout(time: 5, unit: 'MINUTES') {
+            qualityGateStatus = "OK"
+            analysisResult = "OK"
+        }
+
+    } else {
+        sh 'mvn -f 01/pom.xml clean'¡
+        timeout(time: 5, unit: 'MINUTES') {
+            def server = waitForQualityGate()
+            qualityGateStatus = server.getQualityGate().getStatus()
+            analysisResult = server.getTask().getStatus().name()
+        }
+    }
+
+    // Se evalúa el estado del QualityGate y se decide si se debe abortar el pipeline
+    if (qualityGateStatus == 'ERROR' && abortPipeline) {
+        error 'Quality Gate failed: Aborting pipeline'
+    } else {
+        echo "SonarQube analysis result: ${analysisResult}"
+        echo "Quality Gate status: ${qualityGateStatus}"
+    }
+}
